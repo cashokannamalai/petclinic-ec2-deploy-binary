@@ -1,12 +1,12 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: automation.cashokannamalai/v1beta1
 kind: Task
 metadata:
   name: ec2-deploy-binary
   description: 'Deploy a binary to an EC2 instance'
-  author: 'Your Name'
+  author: 'ashok'
   annotations:
-    tekton.dev/icon: 'cloud'
-    tekton.dev/color: 'blue'
+    automation.cashokannamalai/icon: 'cloud'
+    automation.cashokannamalai/color: 'blue'
 
 spec:
   params:
