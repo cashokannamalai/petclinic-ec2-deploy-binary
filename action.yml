@@ -1,0 +1,48 @@
+name: 'EC2 Deploy Binary'
+description: 'Deploy a binary to an EC2 instance'
+author: 'Your Name'
+branding:
+  icon: 'cloud'
+  color: 'blue'
+
+inputs:
+  source-location:
+    description: 'Path to the binary file(s) to deploy'
+    required: true
+  destination-ec2-location:
+    description: 'Target directory on the EC2 instance'
+    required: true
+  aws-ssh-key-data:
+    description: 'SSH Private Key for connecting to the EC2 instance'
+    required: true
+  aws-user:
+    description: 'Username to connect to the EC2 instance'
+    required: true
+  aws-host:
+    description: 'EC2 instance hostname or IP address'
+    required: true
+  deploy-script:
+    description: 'Script to execute after deployment'
+    required: true
+  jar-file-name:
+    description: 'Name of the JAR file to deploy and run'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create SSH Key File
+      shell: bash
+      run: |
+        echo "${{ inputs.aws-ssh-key-data }}" > /tmp/private_key
+        chmod 600 /tmp/private_key
+
+    - name: Transfer Binary to EC2 Instance
+      shell: bash
+      run: |
+        scp -i /tmp/private_key -o StrictHostKeyChecking=no ${{ inputs.source-location }} ${{ inputs.aws-user }}@${{ inputs.aws-host }}:${{ inputs.destination-ec2-location }}
+
+    - name: Run Deploy Script on EC2 Instance
+      shell: bash
+      run: |
+        ssh -i /tmp/private_key -o StrictHostKeyChecking=no ${{ inputs.aws-user }}@${{ inputs.aws-host }} "bash -s" < ${{ inputs.deploy-script }} ${{ inputs.jar-file-name }}
