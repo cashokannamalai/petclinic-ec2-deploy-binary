@@ -1,48 +1,50 @@
-name: 'EC2 Deploy Binary'
-description: 'Deploy a binary to an EC2 instance'
-author: 'Your Name'
-branding:
-  icon: 'cloud'
-  color: 'blue'
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: ec2-deploy-binary
+  description: 'Deploy a binary to an EC2 instance'
+  author: 'Your Name'
+  annotations:
+    tekton.dev/icon: 'cloud'
+    tekton.dev/color: 'blue'
 
-inputs:
-  source-location:
-    description: 'Path to the binary file(s) to deploy'
-    required: true
-  destination-ec2-location:
-    description: 'Target directory on the EC2 instance'
-    required: true
-  aws-ssh-key-data:
-    description: 'SSH Private Key for connecting to the EC2 instance'
-    required: true
-  aws-user:
-    description: 'Username to connect to the EC2 instance'
-    required: true
-  aws-host:
-    description: 'EC2 instance hostname or IP address'
-    required: true
-  deploy-script:
-    description: 'Script to execute after deployment'
-    required: true
-  jar-file-name:
-    description: 'Name of the JAR file to deploy and run'
-    required: true
+spec:
+  params:
+    - name: source-location
+      description: 'Path to the binary file(s) to deploy'
+      type: string
+    - name: destination-ec2-location
+      description: 'Target directory on the EC2 instance'
+      type: string
+    - name: aws-ssh-key-data
+      description: 'SSH Private Key for connecting to the EC2 instance'
+      type: string
+    - name: aws-user
+      description: 'Username to connect to the EC2 instance'
+      type: string
+    - name: aws-host
+      description: 'EC2 instance hostname or IP address'
+      type: string
+    - name: deploy-script
+      description: 'Script to execute after deployment'
+      type: string
+    - name: jar-file-name
+      description: 'Name of the JAR file to deploy and run'
+      type: string
 
-runs:
-  using: 'composite'
   steps:
-    - name: Create SSH Key File
-      shell: bash
-      run: |
-        echo "${{ inputs.aws-ssh-key-data }}" > /tmp/private_key
+    - name: create-ssh-key-file
+      image: ubuntu
+      script: |
+        echo "${{ params.aws-ssh-key-data }}" > /tmp/private_key
         chmod 600 /tmp/private_key
 
-    - name: Transfer Binary to EC2 Instance
-      shell: bash
-      run: |
-        scp -i /tmp/private_key -o StrictHostKeyChecking=no ${{ inputs.source-location }} ${{ inputs.aws-user }}@${{ inputs.aws-host }}:${{ inputs.destination-ec2-location }}
+    - name: transfer-binary-to-ec2-instance
+      image: ubuntu
+      script: |
+        scp -i /tmp/private_key -o StrictHostKeyChecking=no ${{ params.source-location }} ${{ params.aws-user }}@${{ params.aws-host }}:${{ params.destination-ec2-location }}
 
-    - name: Run Deploy Script on EC2 Instance
-      shell: bash
-      run: |
-        ssh -i /tmp/private_key -o StrictHostKeyChecking=no ${{ inputs.aws-user }}@${{ inputs.aws-host }} "bash -s" < ${{ inputs.deploy-script }} ${{ inputs.jar-file-name }}
+    - name: run-deploy-script-on-ec2-instance
+      image: ubuntu
+      script: |
+        ssh -i /tmp/private_key -o StrictHostKeyChecking=no ${{ params.aws-user }}@${{ params.aws-host }} "bash -s" < ${{ params.deploy-script }} ${{ params.jar-file-name }}
