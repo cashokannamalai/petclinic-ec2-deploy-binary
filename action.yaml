@@ -1,4 +1,4 @@
-apiVersion: automation.cashokannamalai/v1beta1
+apiVersion: automation.cloudbees.io/v1alpha1
 kind: Task
 metadata:
   name: ec2-deploy-binary
